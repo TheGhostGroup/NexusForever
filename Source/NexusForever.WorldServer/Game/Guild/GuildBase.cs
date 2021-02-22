@@ -79,9 +79,9 @@ namespace NexusForever.WorldServer.Game.Guild
         /// </summary>
         public abstract uint MaxMembers { get; }
 
-        protected readonly SortedDictionary</*index*/byte, GuildRank> ranks = new SortedDictionary<byte, GuildRank>();
-        protected readonly Dictionary</*characterId*/ulong, GuildMember> members = new Dictionary<ulong, GuildMember>();
-        protected readonly List</*characterId*/ulong> onlineMembers = new List<ulong>();
+        protected readonly SortedDictionary</*index*/byte, GuildRank> ranks = new();
+        protected readonly Dictionary</*characterId*/ulong, GuildMember> members = new();
+        protected readonly List</*characterId*/ulong> onlineMembers = new();
 
         /// <summary>
         /// Create a new <see cref="GuildBase"/> from an existing database model.
@@ -346,12 +346,12 @@ namespace NexusForever.WorldServer.Game.Guild
                 log.Trace($"Guild{Id} has no leader, new member {player.CharacterId} will be assigned to leader.");
 
                 LeaderId = player.CharacterId;
-                member   = AddMember(player.CharacterId, 0);
+                member   = AddMember(player, 0);
                 SendGuildResult(player.Session, GuildResult.YouCreated, Id, referenceText: Name);
             }
             else
             {
-                member = AddMember(player.CharacterId);
+                member = AddMember(player);
                 SendGuildResult(player.Session, GuildResult.YouJoined, Id, referenceText: Name);
             }
 
@@ -622,15 +622,15 @@ namespace NexusForever.WorldServer.Game.Guild
         /// <summary>
         /// Add a new <see cref="GuildMember"/> with supplied character id.
         /// </summary>
-        private GuildMember AddMember(ulong characterId, byte rank = 9)
+        private GuildMember AddMember(Player player, byte rank = 9)
         {
             if (!ranks.TryGetValue(rank, out GuildRank guildRank))
                 throw new ArgumentException($"Invalid rank {rank} for guild {Id}.");
 
-            if (members.TryGetValue(characterId, out GuildMember member))
+            if (members.TryGetValue(player.CharacterId, out GuildMember member))
             {
                 if (!member.PendingDelete)
-                    throw new InvalidOperationException($"Member {characterId} for guild {Id} already exists!");
+                    throw new InvalidOperationException($"Member {player.CharacterId} for guild {Id} already exists!");
 
                 // rank is pending delete, reuse object
                 member.EnqueueDelete(false);
@@ -638,14 +638,14 @@ namespace NexusForever.WorldServer.Game.Guild
             else
             {
                 // new members default to the lowest rank
-                member = new GuildMember(this, characterId, guildRank);
-                members.Add(characterId, member);
+                member = new GuildMember(this, player.CharacterId, guildRank);
+                members.Add(player.CharacterId, member);
             }
 
             MemberOnline(member);
             guildRank.AddMember(member);
 
-            log.Trace($"Added member {characterId} to guild {Id}.");
+            log.Trace($"Added member {player.CharacterId} to guild {Id}.");
             return member;
         }
 
@@ -685,9 +685,13 @@ namespace NexusForever.WorldServer.Game.Guild
         /// <summary>
         /// Return <see cref="GuildMember"/> with supplied character name.
         /// </summary>
-        public GuildMember GetMember(string name)
+        public GuildMember GetMember(string memberName)
         {
-            return GetMember(CharacterManager.Instance.GetCharacterIdByName(name));
+            ulong? characterId = CharacterManager.Instance.GetCharacterIdByName(memberName);
+            if (characterId == null)
+                return null;
+
+            return GetMember(characterId.Value);
         }
 
         /// <summary>

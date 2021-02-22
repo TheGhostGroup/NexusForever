@@ -1065,6 +1065,63 @@ namespace NexusForever.Database.Character.Migrations
                     b.ToTable("character_zonemap_hexgroup");
                 });
 
+            modelBuilder.Entity("NexusForever.Database.Character.Model.ChatChannelMemberModel", b =>
+                {
+                    b.Property<ulong>("Id")
+                        .HasColumnType("bigint(20) unsigned")
+                        .HasDefaultValue(0ul)
+                        .HasColumnName("id");
+
+                    b.Property<ulong>("CharacterId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint(20) unsigned")
+                        .HasDefaultValue(0ul)
+                        .HasColumnName("characterId");
+
+                    b.Property<byte>("Flags")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(3) unsigned")
+                        .HasDefaultValue((byte)0)
+                        .HasColumnName("flags");
+
+                    b.HasKey("Id", "CharacterId")
+                        .HasName("PRIMARY");
+
+                    b.ToTable("chat_channel_member");
+                });
+
+            modelBuilder.Entity("NexusForever.Database.Character.Model.ChatChannelModel", b =>
+                {
+                    b.Property<ulong>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint(20) unsigned")
+                        .HasDefaultValue(0ul)
+                        .HasColumnName("id");
+
+                    b.Property<string>("Name")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("varchar(20)")
+                        .HasDefaultValue("")
+                        .HasColumnName("name");
+
+                    b.Property<string>("Password")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("varchar(20)")
+                        .HasDefaultValue("")
+                        .HasColumnName("password");
+
+                    b.Property<byte>("Type")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(3) unsigned")
+                        .HasDefaultValue((byte)0)
+                        .HasColumnName("type");
+
+                    b.HasKey("Id")
+                        .HasName("PRIMARY");
+
+                    b.ToTable("chat_channel");
+                });
+
             modelBuilder.Entity("NexusForever.Database.Character.Model.GuildDataModel", b =>
                 {
                     b.Property<ulong>("Id")
@@ -1854,6 +1911,18 @@ namespace NexusForever.Database.Character.Migrations
                     b.Navigation("Character");
                 });
 
+            modelBuilder.Entity("NexusForever.Database.Character.Model.ChatChannelMemberModel", b =>
+                {
+                    b.HasOne("NexusForever.Database.Character.Model.ChatChannelModel", "Channel")
+                        .WithMany("Members")
+                        .HasForeignKey("Id")
+                        .HasConstraintName("FK__chat_channel_member_id__chat_channel_id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Channel");
+                });
+
             modelBuilder.Entity("NexusForever.Database.Character.Model.GuildDataModel", b =>
                 {
                     b.HasOne("NexusForever.Database.Character.Model.GuildModel", "Guild")
@@ -2001,6 +2070,11 @@ namespace NexusForever.Database.Character.Migrations
             modelBuilder.Entity("NexusForever.Database.Character.Model.CharacterQuestModel", b =>
                 {
                     b.Navigation("QuestObjective");
+                });
+
+            modelBuilder.Entity("NexusForever.Database.Character.Model.ChatChannelModel", b =>
+                {
+                    b.Navigation("Members");
                 });
 
             modelBuilder.Entity("NexusForever.Database.Character.Model.GuildModel", b =>

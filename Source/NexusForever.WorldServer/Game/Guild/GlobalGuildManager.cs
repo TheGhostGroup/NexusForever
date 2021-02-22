@@ -15,6 +15,7 @@ using NexusForever.WorldServer.Game.Entity;
 using NexusForever.WorldServer.Game.Guild.Static;
 using NexusForever.WorldServer.Game.Social.Static;
 using NexusForever.WorldServer.Network.Message.Model;
+using NexusForever.WorldServer.Network.Message.Model.Shared;
 using NLog;
 
 namespace NexusForever.WorldServer.Game.Guild
@@ -32,15 +33,15 @@ namespace NexusForever.WorldServer.Game.Guild
         public ulong NextGuildId => nextGuildId++;
         private ulong nextGuildId;
 
-        private readonly Dictionary</*guildId*/ ulong, GuildBase> guilds = new Dictionary<ulong, GuildBase>();
-        private readonly Dictionary<string, ulong> guildNameCache = new Dictionary<string, ulong>(StringComparer.InvariantCultureIgnoreCase);
-        private readonly Dictionary<ulong, List<ulong>> guildMemberCache = new Dictionary<ulong, List<ulong>>();
+        private readonly Dictionary</*guildId*/ ulong, GuildBase> guilds = new();
+        private readonly Dictionary<string, ulong> guildNameCache = new(StringComparer.InvariantCultureIgnoreCase);
+        private readonly Dictionary<ulong, List<ulong>> guildMemberCache = new();
 
         private ImmutableDictionary<GuildOperation, (GuildOperationHandlerDelegate, GuildOperationHandlerResultDelegate)> guildOperationHandlers;
         private delegate GuildResultInfo GuildOperationHandlerResultDelegate(GuildBase guild, GuildMember member, Player player, ClientGuildOperation operation);
         private delegate void GuildOperationHandlerDelegate(GuildBase guild, GuildMember member, Player player, ClientGuildOperation operation);
 
-        private readonly UpdateTimer saveTimer = new UpdateTimer(SaveDuration);
+        private readonly UpdateTimer saveTimer = new(SaveDuration);
 
         /// <summary>
         /// Initialise the <see cref="GlobalGuildManager"/>, and build cache of all existing guilds
@@ -294,9 +295,12 @@ namespace NexusForever.WorldServer.Game.Guild
 
                 player.Session.EnqueueMessageEncrypted(new ServerChat
                 {
-                    Channel = ChatChannelType.Debug,
-                    Name    = "GuildManager",
-                    Text    = $"{operation.Operation} not implemented!",
+                    Channel  = new Channel
+                    {
+                        Type = ChatChannelType.Debug
+                    },
+                    FromName = "GlobalGuildManager",
+                    Text     = $"{operation.Operation} not implemented!",
                 });
 
                 return;
