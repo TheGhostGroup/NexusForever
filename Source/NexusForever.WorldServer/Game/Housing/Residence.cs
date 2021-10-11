@@ -676,8 +676,20 @@ namespace NexusForever.WorldServer.Game.Housing
         public Decor DecorCopy(Decor decor)
         {
             var newDecor = new Decor(this, decor, GlobalResidenceManager.Instance.NextDecorId);
-            decors.Add(decor.DecorId, newDecor);
+            decors.Add(newDecor.DecorId, newDecor);
             return newDecor;
+        }
+
+        /// <summary>
+        /// Remove existing <see cref="Decor"/> from the <see cref="Residence"/>.
+        /// </summary>
+        /// <remarks>
+        /// This does not queue the <see cref="Decor"/> for deletion from the database.
+        /// This is intended to be used for <see cref="Decor"/> that has yet to be saved to the database.
+        /// </remarks>
+        public void DecorRemove(Decor decor)
+        {
+            decors.Remove(decor.DecorId);
         }
 
         /// <summary>
