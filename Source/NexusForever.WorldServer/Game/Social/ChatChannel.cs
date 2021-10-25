@@ -72,9 +72,9 @@ namespace NexusForever.WorldServer.Game.Social
 
         public bool IsGuildChannel()
         {
-            return Type == ChatChannelType.Guild
-                || Type == ChatChannelType.GuildOfficer
-                || Type == ChatChannelType.Community;
+            return Type is ChatChannelType.Guild or ChatChannelType.GuildOfficer or ChatChannelType.Community or
+                ChatChannelType.Society or ChatChannelType.WarParty or ChatChannelType.WarPartyOfficer or
+                ChatChannelType.Nexus or ChatChannelType.Trade;
         }
 
         /// <summary>
@@ -377,7 +377,7 @@ namespace NexusForever.WorldServer.Game.Social
                 Type      = Type,
                 ChannelId = Id,
                 Names     = members.Values
-                    .Where(m => !m.PendingDelete)
+                    .Where(m => !m.PendingDelete && m.IsOnline)
                     .Select(m => CharacterManager.Instance.GetCharacterInfo(m.CharacterId).Name)
                     .ToList(),
                 Flags     = members.Values
@@ -648,13 +648,16 @@ namespace NexusForever.WorldServer.Game.Social
         /// <remarks>
         /// <see cref="CanBroadcast(Player, string)"/> should be invoked before invoking this method.
         /// </remarks>
-        public void Broadcast(IWritable message)
+        public void Broadcast(IWritable message, Player except = null)
         {
             foreach (ChatChannelMember member in members.Values
                 .Where(m => m.IsOnline && !m.PendingDelete))
             {
                 Player player = CharacterManager.Instance.GetPlayer(member.CharacterId);
-                player?.Session?.EnqueueMessageEncrypted(message);
+                if (player != except)
+                {
+                    player?.Session?.EnqueueMessageEncrypted(message);
+                }
             }
         }
 
